@@ -1,0 +1,41 @@
+{
+  "leads": [
+    {
+      "id": 3,
+      "nome": "murillo",
+      "whatsapp": "(19) 0",
+      "empresa": "jorlan",
+      "segmento": "comercio",
+      "processo": "testando",
+      "status": "novo",
+      "notes": null,
+      "created_at": "2026-03-20T20:08:25.065Z",
+      "updated_at": "2026-03-20T20:08:25.065Z"
+    },
+    {
+      "id": 2,
+      "nome": "Teste",
+      "whatsapp": "(11) 99999-0000",
+      "empresa": "Empresa Teste",
+      "segmento": "servicos",
+      "processo": "teste",
+      "status": "novo",
+      "notes": null,
+      "created_at": "2026-03-20T20:00:22.190Z",
+      "updated_at": "2026-03-20T20:00:22.190Z"
+    },
+    {
+      "id": 1,
+      "nome": "Eduardo Silva",
+      "whatsapp": "(11) 99999-9999",
+      "empresa": "Silva Com�rcio",
+      "segmento": "comercio",
+      "processo": "Emiss�o de notas fiscais manual todo dia",
+      "status": "novo",
+      "notes": null,
+      "created_at": "2026-03-20T19:53:34.444Z",
+      "updated_at": "2026-03-20T19:53:34.444Z"
+    }
+  ],
+  "nextId": 4
+}

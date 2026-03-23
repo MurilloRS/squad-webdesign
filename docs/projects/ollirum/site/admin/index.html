@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ollirum — Painel Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <div class="login-logo">
+        <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+          <rect x="2" y="8" width="8" height="16" rx="4" fill="url(#g1)"/>
+          <rect x="12" y="8" width="8" height="16" rx="4" fill="url(#g1)"/>
+          <rect x="22" y="14" width="8" height="10" rx="4" fill="url(#g1)"/>
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#6C63FF"/>
+              <stop offset="100%" stop-color="#00E5A0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span>Ollirum</span>
+      </div>
+      <h1>Painel Admin</h1>
+      <p>Acesso restrito à equipe Ollirum</p>
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="loginUser">Usuário</label>
+          <input type="text" id="loginUser" autocomplete="username" placeholder="admin" required>
+        </div>
+        <div class="field">
+          <label for="loginPass">Senha</label>
+          <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+        <div class="login-error" id="loginError" hidden></div>
+        <button type="submit" class="btn-login" id="loginBtn">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboard" hidden>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <rect x="2" y="8" width="8" height="16" rx="4" fill="url(#g2)"/>
+          <rect x="12" y="8" width="8" height="16" rx="4" fill="url(#g2)"/>
+          <rect x="22" y="14" width="8" height="10" rx="4" fill="url(#g2)"/>
+          <defs>
+            <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#6C63FF"/>
+              <stop offset="100%" stop-color="#00E5A0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span>Ollirum</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-view="leads">
+          <span class="nav-icon">📋</span> Leads
+        </a>
+      </nav>
+      <button class="btn-logout" id="logoutBtn">
+        <span>↩</span> Sair
+      </button>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- HEADER -->
+      <header class="main-header">
+        <div>
+          <h1 class="page-title">Leads</h1>
+          <p class="page-sub">Solicitações de diagnóstico</p>
+        </div>
+        <div class="header-actions">
+          <span class="last-refresh" id="lastRefresh"></span>
+          <button class="btn-refresh" id="refreshBtn" title="Atualizar">↻</button>
+        </div>
+      </header>
+
+      <!-- STATS -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card">
+          <span class="stat-value" id="statTotal">—</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-card stat-novo">
+          <span class="stat-value" id="statNovo">—</span>
+          <span class="stat-label">Novos</span>
+        </div>
+        <div class="stat-card stat-contato">
+          <span class="stat-value" id="statContato">—</span>
+          <span class="stat-label">Em contato</span>
+        </div>
+        <div class="stat-card stat-convertido">
+          <span class="stat-value" id="statConvertido">—</span>
+          <span class="stat-label">Convertidos</span>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters-bar">
+        <input type="search" class="filter-search" id="filterSearch" placeholder="Buscar por nome, empresa ou WhatsApp...">
+        <select class="filter-select" id="filterStatus">
+          <option value="">Todos os status</option>
+          <option value="novo">Novo</option>
+          <option value="em-contato">Em contato</option>
+          <option value="fechado">Fechado</option>
+          <option value="convertido">Convertido</option>
+        </select>
+        <select class="filter-select" id="filterSegmento">
+          <option value="">Todos os segmentos</option>
+          <option value="servicos">Serviços</option>
+          <option value="comercio">Comércio</option>
+          <option value="industria">Indústria</option>
+          <option value="saude">Saúde</option>
+          <option value="educacao">Educação</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <table class="leads-table" id="leadsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>Empresa</th>
+              <th>WhatsApp</th>
+              <th>Segmento</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="leadsBody">
+            <tr class="table-empty"><td colspan="8">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="pagination" id="pagination"></div>
+
+    </main>
+  </div>
+
+  <!-- MODAL — DETALHES DO LEAD -->
+  <div class="modal-overlay" id="modalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Detalhes do Lead</h2>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="../assets/js/admin.js"></script>
+</body>
+</html>

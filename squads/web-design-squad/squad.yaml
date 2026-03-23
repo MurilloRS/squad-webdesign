@@ -1,0 +1,64 @@
+name: web-design-squad
+version: 1.0.0
+description: Squad especializado em criar sites e landing pages profissionais e que convertem
+author: murillo
+license: MIT
+slashPrefix: web-design
+
+aiox:
+  minVersion: "2.1.0"
+  type: squad
+
+components:
+  agents:
+    - creative-director.md
+    - web-designer.md
+    - copywriter.md
+    - seo-specialist.md
+    - frontend-dev.md
+    - cro-specialist.md
+    - ux-designer.md
+    - storyteller.md
+  tasks:
+    - creative-director-create-brief.md
+    - creative-director-review-brand-consistency.md
+    - creative-director-define-positioning.md
+    - web-designer-design-landing-page.md
+    - web-designer-create-design-system.md
+    - copywriter-write-headline.md
+    - copywriter-write-copy.md
+    - seo-specialist-keyword-research.md
+    - seo-specialist-optimize-on-page.md
+    - frontend-dev-build-page.md
+    - frontend-dev-optimize-performance.md
+    - cro-specialist-audit-landing-page.md
+    - cro-specialist-review-cta-hierarchy.md
+    - ux-designer-create-user-flow.md
+    - ux-designer-create-persona.md
+    - storyteller-create-brand-story.md
+    - storyteller-define-tone-of-voice.md
+  workflows: []
+  checklists: []
+  templates: []
+  tools: []
+  scripts: []
+
+config:
+  extends: extend
+  coding-standards: config/coding-standards.md
+  tech-stack: config/tech-stack.md
+  source-tree: config/source-tree.md
+
+dependencies:
+  node: []
+  python: []
+  squads: []
+
+tags:
+  - web-design
+  - landing-page
+  - conversion
+  - seo
+  - copywriting
+  - ux
+  - storytelling
