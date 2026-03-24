@@ -1,16 +1,11 @@
 {
   "version": 2,
   "buildCommand": "cd docs/projects/ollirum/site/server && npm install",
-  "outputDirectory": "docs/projects/ollirum/site/server",
-  "builds": [
-    {
-      "src": "docs/projects/ollirum/site/server/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "docs/projects/ollirum/site/**"
-      }
+  "functions": {
+    "docs/projects/ollirum/site/server/server.js": {
+      "includeFiles": "docs/projects/ollirum/site/**"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/(.*)",

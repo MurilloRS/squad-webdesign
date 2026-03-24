@@ -1,0 +1,11 @@
+{
+  "name": "squad-webdesign",
+  "version": "1.0.0",
+  "description": "Ollirum - AI Solutions",
+  "main": "docs/projects/ollirum/site/server/server.js",
+  "scripts": {
+    "start": "node docs/projects/ollirum/site/server/server.js",
+    "dev": "node --watch docs/projects/ollirum/site/server/server.js"
+  },
+  "dependencies": {}
+}
