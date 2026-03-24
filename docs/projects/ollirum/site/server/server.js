@@ -237,6 +237,13 @@ app.delete('/api/leads/:id', authRequired, async (req, res) => {
 });
 
 /* =========================================
+   FALLBACK — Serve index.html for SPA
+   ========================================= */
+app.get('*', (req, res) => {
+  res.sendFile(path.join(staticPath, 'index.html'));
+});
+
+/* =========================================
    EMAIL
    ========================================= */
 async function sendEmailNotification(lead) {
