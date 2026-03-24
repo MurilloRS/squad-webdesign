@@ -267,6 +267,6 @@ async function sendEmailNotification(lead) {
    START
    ========================================= */
 app.listen(PORT, () => {
-  console.log(`\n🚀 Ollirum server: http://localhost:${PORT}`);
-  console.log(`📋 Painel admin:   http://localhost:${PORT}/admin\n`);
+  console.log(`\n🚀 Ollirum server running on port ${PORT}`);
+  console.log(`📋 Admin panel:    http://localhost:${PORT}/admin\n`);
 });
