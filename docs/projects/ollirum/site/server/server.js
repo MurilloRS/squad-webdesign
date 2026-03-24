@@ -1,7 +1,6 @@
 /**
  * Ollirum — Backend Server
- * Express + JSON store + JWT + Nodemailer
- * (sem dependências nativas — funciona em qualquer Node.js)
+ * Express + Supabase PostgreSQL + JWT + Nodemailer
  */
 require('dotenv').config();
 
@@ -11,58 +10,19 @@ const jwt        = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const cors       = require('cors');
 const path       = require('path');
-const fs         = require('fs');
+const { createClient } = require('@supabase/supabase-js');
 
 const app        = express();
 const PORT       = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-prod';
-const DB_PATH    = path.join(__dirname, 'data', 'leads.json');
 
 /* =========================================
-   JSON DATABASE
+   SUPABASE CLIENT
    ========================================= */
-function readDB() {
-  if (!fs.existsSync(DB_PATH)) return { leads: [], nextId: 1 };
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-}
-
-function writeDB(data) {
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
-}
-
-function getLeads()    { return readDB().leads; }
-function getNextId()   { return readDB().nextId; }
-
-function insertLead(lead) {
-  const db   = readDB();
-  const id   = db.nextId;
-  const now  = new Date().toISOString();
-  const row  = { id, ...lead, status: 'novo', notes: null, created_at: now, updated_at: now };
-  db.leads.unshift(row);  // mais recente primeiro
-  db.nextId = id + 1;
-  writeDB(db);
-  return row;
-}
-
-function updateLeadField(id, field, value) {
-  const db  = readDB();
-  const idx = db.leads.findIndex(l => l.id === Number(id));
-  if (idx === -1) return false;
-  db.leads[idx][field]     = value;
-  db.leads[idx].updated_at = new Date().toISOString();
-  writeDB(db);
-  return true;
-}
-
-function deleteLead(id) {
-  const db  = readDB();
-  const idx = db.leads.findIndex(l => l.id === Number(id));
-  if (idx === -1) return false;
-  db.leads.splice(idx, 1);
-  writeDB(db);
-  return true;
-}
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 /* =========================================
    MIDDLEWARE
@@ -91,20 +51,34 @@ function authRequired(req, res, next) {
 /* =========================================
    ROUTES — PUBLIC
    ========================================= */
-app.post('/api/leads', (req, res) => {
+app.post('/api/leads', async (req, res) => {
   const { nome, whatsapp, empresa, segmento, processo } = req.body;
   if (!nome?.trim() || !whatsapp?.trim() || !empresa?.trim()) {
     return res.status(400).json({ error: 'Nome, WhatsApp e empresa são obrigatórios.' });
   }
-  const lead = insertLead({
+
+  const leadData = {
     nome: nome.trim(),
     whatsapp: whatsapp.trim(),
     empresa: empresa.trim(),
     segmento: segmento?.trim() || null,
-    processo: processo?.trim() || null
-  });
-  sendEmailNotification(lead).catch(e => console.error('[Email]', e.message));
-  res.status(201).json({ success: true, id: lead.id });
+    processo: processo?.trim() || null,
+    status: 'novo'
+  };
+
+  const { data, error } = await supabase
+    .from('leads')
+    .insert([leadData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[Supabase Insert Error]', error);
+    return res.status(500).json({ error: 'Erro ao salvar lead.' });
+  }
+
+  sendEmailNotification(data).catch(e => console.error('[Email]', e.message));
+  res.status(201).json({ success: true, id: data.id });
 });
 
 /* =========================================
@@ -133,61 +107,119 @@ app.post('/api/auth/verify', authRequired, (req, res) => {
 /* =========================================
    ROUTES — ADMIN
    ========================================= */
-app.get('/api/leads/stats', authRequired, (req, res) => {
-  const leads  = getLeads();
-  const stats  = { total: leads.length, novo: 0, 'em-contato': 0, fechado: 0, convertido: 0 };
-  leads.forEach(l => { if (stats[l.status] !== undefined) stats[l.status]++; });
+app.get('/api/leads/stats', authRequired, async (req, res) => {
+  const { data, error } = await supabase
+    .from('leads')
+    .select('status');
+
+  if (error) {
+    console.error('[Supabase Error]', error);
+    return res.status(500).json({ error: 'Erro ao carregar estatísticas.' });
+  }
+
+  const stats = { total: data.length, novo: 0, 'em-contato': 0, fechado: 0, convertido: 0 };
+  data.forEach(l => { if (stats[l.status] !== undefined) stats[l.status]++; });
   res.json(stats);
 });
 
-app.get('/api/leads', authRequired, (req, res) => {
+app.get('/api/leads', authRequired, async (req, res) => {
   const { status, segmento, search, page = 1, limit = 15 } = req.query;
-  let leads = getLeads();
+  let query = supabase.from('leads').select('*', { count: 'exact' });
 
-  if (status)   leads = leads.filter(l => l.status === status);
-  if (segmento) leads = leads.filter(l => l.segmento === segmento);
+  if (status) query = query.eq('status', status);
+  if (segmento) query = query.eq('segmento', segmento);
   if (search) {
     const q = search.toLowerCase();
-    leads = leads.filter(l =>
-      l.nome.toLowerCase().includes(q) ||
-      l.empresa.toLowerCase().includes(q) ||
-      l.whatsapp.includes(q)
-    );
+    query = query.or(`nome.ilike.%${q}%,empresa.ilike.%${q}%,whatsapp.ilike.%${q}%`);
   }
 
-  const total  = leads.length;
-  const pages  = Math.ceil(total / Number(limit)) || 1;
+  query = query.order('created_at', { ascending: false });
+
   const offset = (Number(page) - 1) * Number(limit);
-  leads        = leads.slice(offset, offset + Number(limit));
+  query = query.range(offset, offset + Number(limit) - 1);
 
-  res.json({ leads, total, page: Number(page), pages });
+  const { data, error, count } = await query;
+
+  if (error) {
+    console.error('[Supabase Error]', error);
+    return res.status(500).json({ error: 'Erro ao carregar leads.' });
+  }
+
+  const pages = Math.ceil((count || 0) / Number(limit)) || 1;
+  res.json({ leads: data, total: count || 0, page: Number(page), pages });
 });
 
-app.get('/api/leads/:id', authRequired, (req, res) => {
-  const lead = getLeads().find(l => l.id === Number(req.params.id));
-  if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
-  res.json(lead);
+app.get('/api/leads/:id', authRequired, async (req, res) => {
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .eq('id', req.params.id)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return res.status(404).json({ error: 'Lead não encontrado.' });
+    }
+    console.error('[Supabase Error]', error);
+    return res.status(500).json({ error: 'Erro ao carregar lead.' });
+  }
+
+  res.json(data);
 });
 
-app.patch('/api/leads/:id/status', authRequired, (req, res) => {
+app.patch('/api/leads/:id/status', authRequired, async (req, res) => {
   const VALID = ['novo', 'em-contato', 'fechado', 'convertido'];
   const { status } = req.body;
   if (!VALID.includes(status))
     return res.status(400).json({ error: `Status inválido. Use: ${VALID.join(', ')}` });
-  const ok = updateLeadField(req.params.id, 'status', status);
-  if (!ok) return res.status(404).json({ error: 'Lead não encontrado.' });
+
+  const { error } = await supabase
+    .from('leads')
+    .update({ status })
+    .eq('id', req.params.id);
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return res.status(404).json({ error: 'Lead não encontrado.' });
+    }
+    console.error('[Supabase Error]', error);
+    return res.status(500).json({ error: 'Erro ao atualizar status.' });
+  }
+
   res.json({ success: true });
 });
 
-app.patch('/api/leads/:id/notes', authRequired, (req, res) => {
-  const ok = updateLeadField(req.params.id, 'notes', req.body.notes || null);
-  if (!ok) return res.status(404).json({ error: 'Lead não encontrado.' });
+app.patch('/api/leads/:id/notes', authRequired, async (req, res) => {
+  const { error } = await supabase
+    .from('leads')
+    .update({ notes: req.body.notes || null })
+    .eq('id', req.params.id);
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return res.status(404).json({ error: 'Lead não encontrado.' });
+    }
+    console.error('[Supabase Error]', error);
+    return res.status(500).json({ error: 'Erro ao salvar anotações.' });
+  }
+
   res.json({ success: true });
 });
 
-app.delete('/api/leads/:id', authRequired, (req, res) => {
-  const ok = deleteLead(req.params.id);
-  if (!ok) return res.status(404).json({ error: 'Lead não encontrado.' });
+app.delete('/api/leads/:id', authRequired, async (req, res) => {
+  const { error } = await supabase
+    .from('leads')
+    .delete()
+    .eq('id', req.params.id);
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return res.status(404).json({ error: 'Lead não encontrado.' });
+    }
+    console.error('[Supabase Error]', error);
+    return res.status(500).json({ error: 'Erro ao deletar lead.' });
+  }
+
   res.json({ success: true });
 });
 
