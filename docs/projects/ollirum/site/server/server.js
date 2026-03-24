@@ -42,6 +42,15 @@ console.log('📁 Admin path:', adminPath);
 
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
 app.use(express.json());
+
+// Check if static path exists
+const fs = require('fs');
+console.log('📁 Checking static path:', staticPath);
+console.log('📁 Path exists:', fs.existsSync(staticPath));
+if (fs.existsSync(staticPath)) {
+  console.log('📁 Contents:', fs.readdirSync(staticPath));
+}
+
 app.use(express.static(staticPath));
 app.use('/admin', express.static(adminPath));
 
