@@ -34,10 +34,16 @@ const supabase = createClient(
 /* =========================================
    MIDDLEWARE
    ========================================= */
+const staticPath = path.join(__dirname, '..');
+const adminPath = path.join(__dirname, '..', 'admin');
+
+console.log('📁 Static files path:', staticPath);
+console.log('📁 Admin path:', adminPath);
+
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..')));
-app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
+app.use(express.static(staticPath));
+app.use('/admin', express.static(adminPath));
 
 /* =========================================
    AUTH MIDDLEWARE
