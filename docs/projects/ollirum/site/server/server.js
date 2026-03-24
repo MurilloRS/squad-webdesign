@@ -19,6 +19,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-prod';
 /* =========================================
    SUPABASE CLIENT
    ========================================= */
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Missing Supabase env vars:', {
+    url: process.env.SUPABASE_URL ? '✓' : '✗ SUPABASE_URL missing',
+    key: process.env.SUPABASE_SERVICE_ROLE_KEY ? '✓' : '✗ SUPABASE_SERVICE_ROLE_KEY missing'
+  });
+}
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
