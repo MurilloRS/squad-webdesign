@@ -240,8 +240,10 @@ app.delete('/api/leads/:id', authRequired, async (req, res) => {
    FALLBACK — Serve index.html for SPA
    ========================================= */
 app.get('*', (req, res) => {
-  // Não retorna index.html para rotas de API
-  if (req.path.startsWith('/api') || req.path.startsWith('/admin')) {
+  // Ignora rotas de API, admin e arquivos com extensão
+  if (req.path.startsWith('/api') ||
+      req.path.startsWith('/admin') ||
+      /\.\w+$/.test(req.path)) {
     return res.status(404).json({ error: 'Not found' });
   }
   res.sendFile(path.join(staticPath, 'index.html'));
